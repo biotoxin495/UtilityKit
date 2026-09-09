@@ -4,8 +4,8 @@ local StringUtil = {}
 
 --[=[
 	Splits a mixed-format identifier or phrase into lowercase word components.
-	CamelCase and acronym boundaries are separated, and non-alphanumeric
-	characters are treated as delimiters.
+	CamelCase and acronym boundaries are separated, and non-alphanumeric characters
+	(other than underscores) are treated as delimiters.
 
 	@param value string -- The source string to split into words.
 	@return {string} -- Lowercase word components in their original order.
