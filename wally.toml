@@ -1,0 +1,20 @@
+[package]
+name = "biotoxin495/utilitykit"
+description = "A focused collection of stateless Roblox and Luau utilities."
+version = "1.0.0"
+license = "MIT"
+authors = ["biotoxin495"]
+realm = "shared"
+registry = "https://github.com/UpliftGames/wally-index"
+repository = "https://github.com/biotoxin495/UtilityKit"
+
+exclude = [
+	"examples",
+	"docs",
+	".github",
+	"*.rbxl",
+	"*.rbxlx",
+]
+
+[dependencies]
+Signal = "sleitnick/signal@2.0.3"

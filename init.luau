@@ -1,0 +1,144 @@
+--  _   _ _   _ _ _ _         _  ___ _
+-- | | | | |_(_) (_) |_ _   _| |/ (_) |_
+-- | | | | __| | | | __| | | | ' /| | __|
+-- | |_| | |_| | | | |_| |_| | . \| | |_
+--  \___/ \__|_|_|_|\__|\__, |_|\_\_|\__|
+--                      |___/
+
+-- made with ❤️ by biotoxin495
+
+-- UtilityKit
+-- Dependency-free stateless utilities for Roblox and Luau.
+--
+-- Provides focused, namespaced helpers for ordinary data and presentation work.
+-- It has no service dependencies and is suitable for both server and client code.
+--
+-- Place this ModuleScript where shared code can require it, such as ReplicatedStorage.
+--
+-- Usage:
+--   local UtilityKit = require(ReplicatedStorage:WaitForChild("UtilityKit"))
+--
+--   local settings = UtilityKit.Table.DeepMerge(defaults, overrides)
+--   local reward = UtilityKit.Random.WeightedChoice(weightedRewards)
+--   local label = UtilityKit.Time.FormatDuration(3_661)
+--
+-- Table utilities:
+--   * Count(source: table) -> number: number of entries, including dictionary keys.
+--   * Keys(source: table) -> {any}: an array of the source's keys.
+--   * Values(source: table) -> {any}: an array of the source's values.
+--   * ShallowCopy(source: table) -> table: copy with nested tables still shared.
+--   * DeepCopy(value: any, preserveMetatable: boolean?) -> any: recursive copy that
+--     preserves cycles and shared references; metatables are kept by default.
+--   * DeepEqual(left: any, right: any) -> boolean: recursive equality comparison;
+--     supports cyclic tables and ignores metatables.
+--   * DeepMerge(base: table, incoming: table) -> table: a new deep-copied merge;
+--     neither input is changed.
+--   * DeepMergeInPlace(base: table, incoming: table) -> table: merges into and
+--     returns base. This mutates base.
+--   * Unique(values: {any}) -> {any}: first occurrence of each value, in order.
+--   * Difference(first: {any}, second: {any}) -> {any}: unique values in first that
+--     are absent from second, preserving first's order.
+--   * Intersection(first: {any}, second: {any}) -> {any}: unique shared values,
+--     preserving first's order.
+--   * GetPath(root: any, path: {any}, defaultValue: any?) -> any: nested value, or
+--     defaultValue when it cannot be found.
+--   * SetPath(root: table, path: {any}, value: any) -> table: writes a nested value,
+--     creating missing tables, then returns root. This mutates root.
+--   * Diff(oldValue: table, newValue: table) -> {DiffOperation}: Set and Remove
+--     operations needed to transform oldValue into newValue.
+--
+-- Random utilities (random: Random? accepts an optional deterministic generator):
+--   * Integer(minimum: number, maximum: number, random: Random?) -> number: uniform
+--     integer in the inclusive range.
+--   * Float(minimum: number?, maximum: number?, random: Random?) -> number: uniform
+--     float between the bounds; defaults to 0 and 1.
+--   * Choice(items: {T}, random: Random?) -> T?: one uniformly selected item, or nil
+--     for an empty array.
+--   * DictionaryEntry(dictionary: table, random: Random?) -> (any?, any?): one random
+--     key and its value, or nil, nil for an empty dictionary.
+--   * WeightedChoice(items: {{Value: T, Weight: number}}, random: Random?) -> T?: one
+--     value selected proportional to its non-negative weight, or nil when no item can win.
+--   * Shuffle(items: {T}, random: Random?) -> {T}: shuffled shallow copy; input stays
+--     unchanged.
+--   * Sample(items: {T}, count: number, random: Random?) -> {T}: count unique items
+--     selected without replacement; input stays unchanged.
+--
+-- Number utilities:
+--   * IsFinite(value: number) -> boolean: false for infinities and NaN.
+--   * Average(values: {number}) -> number?: arithmetic mean, or nil for an empty array.
+--   * MinMax(values: {number}) -> (number?, number?): smallest and largest values, or
+--     nil, nil for an empty array.
+--   * RoundTo(value: number, decimalPlaces: number?) -> number: value rounded to the
+--     requested decimal precision; defaults to whole numbers.
+--   * RoundToStep(value: number, step: number) -> number: nearest multiple of step.
+--   * Normalize(value: number, inputMinimum: number, inputMaximum: number,
+--     clampResult: boolean?) -> number: value mapped to 0–1, optionally clamped.
+--   * MapRange(value: number, inputMinimum: number, inputMaximum: number,
+--     outputMinimum: number, outputMaximum: number, clampResult: boolean?) -> number:
+--     value mapped between numeric ranges, optionally clamped.
+--   * FormatThousands(value: number, decimalPlaces: number?, thousandsSeparator: string?,
+--     decimalSeparator: string?) -> string: grouped finite-number display text.
+--   * FormatCompact(value: number, decimalPlaces: number?) -> string: finite-number
+--     display text using K, M, B, T, or Q suffixes.
+--   * DiscountPercent(oldPrice: number, newPrice: number, roundStep: number?) -> number:
+--     percent reduction; negative results represent an increase.
+--   * OrdinalSuffix(value: number) -> string: English suffix such as "st", "nd", or "th".
+--   * FormatOrdinal(value: number) -> string: value followed by its English ordinal suffix.
+--
+-- Time utilities:
+--   * SplitDuration(totalSeconds: number) -> DurationParts: IsNegative plus whole Days,
+--     Hours, Minutes, and Seconds.
+--   * FormatClock(totalSeconds: number, options: {AlwaysShowHours: boolean?,
+--     DecimalPlaces: number?}?) -> string: MM:SS or HH:MM:SS duration text.
+--   * FormatDuration(totalSeconds: number, maxUnits: number?) -> string: compact d/h/m/s
+--     duration text; defaults to at most two non-zero units.
+--   * FormatRelative(targetUnix: number, options: {Now: number?}?) -> string: relative
+--     English text such as "in 3 hours", "2 days ago", or "now".
+--   * FormatDate(unixTimestamp: number, options: {UTC: boolean?, IncludeYear: boolean?,
+--     Separator: string?, Order: "DMY" | "MDY" | "YMD"?}?) -> string: numeric date text.
+--   * IsoToUnix(isoDate: string) -> number?: parsed ISO-8601 Unix timestamp, or nil.
+--   * UnixToIso(unixTimestamp: number) -> string: ISO-8601 representation.
+--   * GetDayPart(hour: number, divisions: {{Name: string, StartHour: number,
+--     EndHour: number}}?) -> (string?, number?): matching day-part name and one-based
+--     index, or nil, nil when no supplied division matches.
+--
+-- Vector utilities:
+--   * Closest(items: {T}, target: Vector2 | Vector3,
+--     selector: ((T) -> (Vector2 | Vector3))?) -> (T?, number?, number?): closest item,
+--     one-based index, and distance; all are nil for an empty array.
+--   * Furthest(items: {T}, target: Vector2 | Vector3,
+--     selector: ((T) -> (Vector2 | Vector3))?) -> (T?, number?, number?): furthest item,
+--     one-based index, and distance; all are nil for an empty array.
+--
+-- UDim utilities:
+--   * ScaleToOffset(scale: Vector2, absoluteSize: Vector2) -> Vector2: scale converted
+--     to pixel offsets.
+--   * OffsetToScale(offset: Vector2, absoluteSize: Vector2) -> Vector2: pixel offsets
+--     converted to scale components.
+--   * Resolve(value: UDim2, absoluteSize: Vector2) -> Vector2: final pixel position or
+--     size from scale and offset components.
+--
+-- String utilities:
+--   * Trim(value: string) -> string: value without leading or trailing whitespace.
+--   * StartsWith(value: string, prefix: string) -> boolean: whether value begins with prefix.
+--   * EndsWith(value: string, suffix: string) -> boolean: whether value ends with suffix.
+--   * EscapePattern(value: string) -> string: value escaped for literal use in a Luau pattern.
+--   * ToSnakeCase(value: string) -> string: lowercase words joined by underscores.
+--   * ToKebabCase(value: string) -> string: lowercase words joined by hyphens.
+--   * ToPascalCase(value: string) -> string: words joined in PascalCase.
+--   * ToCamelCase(value: string) -> string: words joined in camelCase.
+--
+-- All functions use dot syntax. They do not mutate inputs unless explicitly documented.
+--!strict
+
+local src = script.Parent.src
+
+return table.freeze({
+	Table = require(src.Table),
+	Random = require(src.Random),
+	Number = require(src.Number),
+	Time = require(src.Time),
+	Vector = require(src.Vector),
+	UDim = require(src.UDim),
+	String = require(src.String),
+})
